@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+
+    <ImageView
+        android:id="@+id/rv_item_image"
+        android:layout_width="60dp"
+        android:layout_height="100dp"
+        android:contentDescription="TODO" />
+
+    <ImageButton
+        android:id="@+id/subtract_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="TODO"
+        android:layout_gravity="top|end"
+        android:layout_margin="3dp"
+        android:elevation="3dp"
+        android:background="@drawable/round_button"
+        android:src="@drawable/ic_sharp_remove_24px"/>
+
+
+</FrameLayout>
