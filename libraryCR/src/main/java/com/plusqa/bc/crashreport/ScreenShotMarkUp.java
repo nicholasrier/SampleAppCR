@@ -290,9 +290,9 @@ public class ScreenShotMarkUp extends AppCompatActivity {
         isFABOpen = true;
 
         fabCurrentTool.animate().rotationBy(180 - fabCurrentTool.getRotation());
-        fabLayoutDraw.animate().translationY(-55);
-        fabLayoutShapes.animate().translationY(-100);
-        fabLayoutText.animate().translationY(-145);
+        fabLayoutDraw.animate().translationY(-getResources().getDimension(R.dimen.standard_55));
+        fabLayoutShapes.animate().translationY(-getResources().getDimension(R.dimen.standard_100));
+        fabLayoutText.animate().translationY(-getResources().getDimension(R.dimen.standard_145));
         fabLayoutRed.animate().translationX(-120);
         fabLayoutGreen.animate().translationX(-240);
         fabLayoutBlack.animate().translationX(-360).setListener(new Animator.AnimatorListener() {

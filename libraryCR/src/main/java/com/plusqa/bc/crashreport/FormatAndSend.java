@@ -115,7 +115,7 @@ public class FormatAndSend extends AppCompatActivity
 
             sendReport();
 
-            this.finish();
+            this.finishAffinity();
 
             return true;
         }

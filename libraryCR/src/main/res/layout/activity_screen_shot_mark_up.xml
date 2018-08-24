@@ -13,14 +13,14 @@
     <android.support.v7.widget.Toolbar
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
-        app:theme = "@style/HeaderBar"
-        app:popupTheme="@style/AppTheme"
+        app:theme = "@style/HeaderBarCR"
+        app:popupTheme="@style/AppThemeCR"
         app:title="Edit Image"
         android:id="@+id/my_toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:elevation="4dp"
-        style="@style/AppTheme" >
+        style="@style/AppThemeCR" >
 
     </android.support.v7.widget.Toolbar>
 
@@ -32,25 +32,13 @@
 
         xmlns:android="http://schemas.android.com/apk/res/android">
 
-        <!--<RelativeLayout-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:orientation="horizontal">-->
+        <LinearLayout
+            android:id="@+id/screenshotLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:adjustViewBounds="true" />
 
-            <!--<RelativeLayout-->
-                <!--android:id="@+id/ETLayout"-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="match_parent"-->
-                <!--tools:ignore="UselessParent">-->
-
-                <LinearLayout
-                    android:id="@+id/screenshotLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal"
-                    android:adjustViewBounds="true" />
-            <!--</RelativeLayout>-->
-        <!--</RelativeLayout>-->
     </ScrollView>
 
     <include layout="@layout/content_screenshotmarkup" />

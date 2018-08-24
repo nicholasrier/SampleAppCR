@@ -38,6 +38,8 @@ public class Reporter {
     private String image_name = "screenshot.jpg";
     private String log_name = "logcat.txt";
 
+    static final int SEND_BUG_REPORT_REQUEST = 1;
+
 
     private class simpleActivityCallback implements Application.ActivityLifecycleCallbacks {
 
@@ -89,6 +91,34 @@ public class Reporter {
 
         application.registerActivityLifecycleCallbacks(new simpleActivityCallback());
 
+        shakeDetector = new ShakeDetector();
+
+        shakeDetector.setOnShakeListener(new ShakeDetector.OnShakeListener() {
+
+            @Override
+            public void onShake() {
+
+                Context context = application.getApplicationContext();
+                Activity activity = activityWeakReference.get();
+                Utils.saveBitmap(context, image_name, getScreenBitmap());
+
+                Utils.saveLog(context, log_name);
+
+                Intent intent = null;
+                try {
+                    intent = new Intent(activity, Class.forName("com.plusqa.bc.crashreport.ScreenShotMarkUp"));
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+
+                if (intent != null) {
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                }
+
+                activity.startActivity(intent);
+            }
+        });
+
         sensorManager = (SensorManager) application.getSystemService(Context.SENSOR_SERVICE);
 
         if (sensorManager != null) {
@@ -100,28 +130,6 @@ public class Reporter {
             registered = true;
         }
 
-        shakeDetector = new ShakeDetector();
-
-        shakeDetector.setOnShakeListener(new ShakeDetector.OnShakeListener() {
-
-            @Override
-            public void onShake() {
-
-                Context context = application.getApplicationContext();
-                Utils.saveBitmap(context, image_name, getScreenBitmap());
-
-                Utils.saveLog(context, log_name);
-
-                Intent intent = null;
-                try {
-                    intent = new Intent(activityWeakReference.get(), Class.forName("com.plusqa.bc.crashreport.ScreenShotMarkUp"));
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-                application.startActivity(intent);
-
-            }
-        });
     }
 
     private Bitmap getScreenBitmap() {
