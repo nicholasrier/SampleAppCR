@@ -10,6 +10,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.plusqa.bc.crashreport.CrashReport;
+import com.plusqa.bc.crashreport.Reporter;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,8 +30,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        CrashReport cr = new CrashReport();
-        cr.start(this);
+        Reporter reporter = new Reporter(getApplication());
 
     }
 

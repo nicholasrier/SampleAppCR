@@ -22,7 +22,7 @@ public class ShakeDetector implements SensorEventListener {
     }
 
     public interface OnShakeListener {
-        void onShake(int count);
+        void onShake();
     }
 
     @Override
@@ -60,7 +60,7 @@ public class ShakeDetector implements SensorEventListener {
                 mShakeTimestamp = now;
                 mShakeCount++;
 
-                mListener.onShake(mShakeCount);
+                mListener.onShake();
             }
         }
     }

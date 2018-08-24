@@ -50,6 +50,18 @@ public class Utils {
         return bm;
     }
 
+    public static void saveLog(Context context, String logName) {
+
+        File logDirectory = context.getDir("logDir", Context.MODE_PRIVATE);
+
+        try {
+            Runtime.getRuntime().exec(new String[]{"logcat", "-df", logDirectory.toString() + "/" + logName});
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
     public static StringBuilder readLogFromInternalMemory(Context context) {
         File log_directory = context.getDir("logDir", Context.MODE_PRIVATE);
         FileInputStream fis = null;

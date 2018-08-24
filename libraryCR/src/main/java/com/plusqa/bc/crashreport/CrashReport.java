@@ -37,11 +37,7 @@ public class CrashReport extends AppCompatActivity {
         mShakeDetector.setOnShakeListener(new ShakeDetector.OnShakeListener() {
 
             @Override
-            public void onShake(int count) {
-                handleShakeEvent();
-            }
-
-            private void handleShakeEvent() {
+            public void onShake() {
 
                 // Save the logCat internally
                 Context context = getApplicationContext();
@@ -82,63 +78,6 @@ public class CrashReport extends AppCompatActivity {
 
         });
     }
-
-    public void start(final Activity activity) {
-        mSensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
-        if (mSensorManager != null) {
-            mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        }
-
-        mShakeDetector = new ShakeDetector();
-        mShakeDetector.setOnShakeListener(new ShakeDetector.OnShakeListener() {
-
-            @Override
-            public void onShake(int count) {
-                handleShakeEvent();
-            }
-
-            private void handleShakeEvent() {
-
-                // Save the logCat internally
-                Context context = getApplicationContext();
-                File log_directory = activity.getDir("logDir", Context.MODE_PRIVATE);
-                try {
-                    Runtime.getRuntime().exec(new String[]{"logcat", "-df", log_directory.toString() + "/" + log_name});
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                // Capture screen in a bitmap
-                android.view.View view = activity.getWindow().getDecorView();
-                view.setDrawingCacheEnabled(true);
-                view.buildDrawingCache();
-
-                Bitmap b1 = view.getDrawingCache();
-
-                Rect frame = new Rect();
-                activity.getWindow().getDecorView().getWindowVisibleDisplayFrame(frame);
-
-                int statusBarHeight = frame.top;
-
-                Point size = new Point();
-
-                activity.getWindowManager().getDefaultDisplay().getSize(size);
-
-                Bitmap b = Bitmap.createBitmap(b1, 0, statusBarHeight, size.x, size.y - statusBarHeight);
-
-                view.destroyDrawingCache();
-
-                // Save bitmap to internal memory
-                Utils.saveBitmap(context, image_name, b);
-
-                // Start a new activity to display and markup screenshot
-                Intent intent = new Intent(CrashReport.this, ScreenShotMarkUp.class);
-                startActivity(intent);
-            }
-
-        });
-    }
-
 
     @Override
     public void onResume() {
