@@ -63,10 +63,10 @@ public class FormatAndSend extends AppCompatActivity
             ab.setDisplayHomeAsUpEnabled(true);
         }
 
-        Bitmap screenShotBM = Utils.getBitMap(getApplicationContext(), "edited_image");
+        Intent intent = getIntent();
+        String calledFrom = intent.getStringExtra("CalledFrom");
 
         images = new ArrayList<>();
-
 
         RecyclerView recyclerView = findViewById(R.id.previewScroll);
 
@@ -81,7 +81,11 @@ public class FormatAndSend extends AppCompatActivity
 
         recyclerView.setAdapter(adapter);
 
-        images.add(screenShotBM);
+        if (calledFrom.equals("SCREENSHOT")) {
+            Bitmap screenShotBM = Utils.getBitMap(getApplicationContext(), "edited_image");
+            images.add(screenShotBM);
+        }
+
         adapter.notifyItemInserted(images.size());
 
         //Tapping outside of fields will clear focus and collapse keyboard

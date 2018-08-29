@@ -12,13 +12,6 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 
-import com.plusqa.bc.crashreport.CrashReport;
-import com.plusqa.bc.crashreport.ScreenShotMarkUp;
-import com.plusqa.bc.crashreport.ShakeDetector;
-import com.plusqa.bc.crashreport.Utils;
-
-import java.io.File;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 public class Reporter {

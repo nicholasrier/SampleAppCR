@@ -279,6 +279,7 @@ public class ScreenShotMarkUp extends AppCompatActivity {
                 Utils.saveBitmap(ScreenShotMarkUp.this, "edited_image", b);
 
                 Intent intent = new Intent(ScreenShotMarkUp.this, FormatAndSend.class);
+                intent.putExtra("CalledFrom", "SCREENSHOT");
                 startActivity(intent);
                 return true;
         }
@@ -456,7 +457,6 @@ public class ScreenShotMarkUp extends AppCompatActivity {
     }
 
     public void selectColor(final View view) {
-        //implement later -- use four colors - don't display active color in color options
 
         ObjectAnimator animator = ObjectAnimator.ofInt(fabCurrentTool,
                 "backgroundTint",

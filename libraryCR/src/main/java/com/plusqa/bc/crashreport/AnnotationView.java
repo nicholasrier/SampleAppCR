@@ -26,7 +26,11 @@ public class AnnotationView extends FrameLayout {
 
     private TextDrawing currentText;
 
+    private ArrayList<TextDrawing> textList = new ArrayList<>();
+
     private Paint selectedPaint;
+
+    private Paint textPaint;
 
     private RectF deleteArea;
 
@@ -36,7 +40,7 @@ public class AnnotationView extends FrameLayout {
 
     boolean textRemoved = false;
 
-    String test = " ";
+    private Context context;
 
     private EditText editText;
     OnFocusChangeListener onFocusChangeListenerListener = new OnFocusChangeListener() {
@@ -45,26 +49,38 @@ public class AnnotationView extends FrameLayout {
             if (hasFocus) {
 
                 editText.setText(currentText.getText());
+
                 editText.setTextColor(currentText.getPaint().getColor());
+
+                currentText.setBitmap(editText.getDrawingCache());
 
             } else {
 
                 Rect newRect = new Rect();
                 editText.getDrawingRect(newRect);
 
-                textRemoved = currentText.getText().length() <
-                        editText.getText().toString().length();
+                currentText.setRectF(new RectF(newRect));
 
-                if (textRemoved) {
-                    currentText.reset();
-                    currentText.moveTo(editText.getX(), editText.getY());
-                }
+                currentText.setText(editText.getText().toString());
 
-                currentText.lineTo(newRect.right, currentText.getY());
+                editText.setVisibility(GONE);
+
+                // can't always add here
+                drawings.add(currentText);
+//                textRemoved = currentText.getText().length() <
+//                        editText.getText().toString().length();
+
+//                if (textRemoved) {
+//                    currentText.reset();
+//                    currentText.moveTo(editText.getX(), editText.getY());
+//                }
+
+//                currentText.lineTo(newRect.right, currentText.getY());
 
 
 
             }
+
         }
     };
 
@@ -113,6 +129,8 @@ public class AnnotationView extends FrameLayout {
     public AnnotationView(Context context) {
         this(context, null);
 
+        this.context = context;
+
         init(context);
 
     }
@@ -138,13 +156,11 @@ public class AnnotationView extends FrameLayout {
 
     private void init(Context context) {
 
-        // Default color
-        setPaint(Color.parseColor("#51ccc0"));
-
         // Default tool
         toolFlag = DRAW_TOOL;
 
         editText = new EditText(context);
+
         editText.setOnFocusChangeListener(onFocusChangeListenerListener);
         editText.setVisibility(GONE);
         addView(editText, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
@@ -156,6 +172,11 @@ public class AnnotationView extends FrameLayout {
         setDrawingCacheEnabled(true);
         setFocusable(true);
         setFocusableInTouchMode(true);
+
+        // Default color
+        setPaint(Color.parseColor("#51ccc0"));
+
+        imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
 
     }
 
@@ -232,6 +253,11 @@ public class AnnotationView extends FrameLayout {
 
                 }
 
+                if (editText.hasFocus()) {
+                    deselectView(editText);
+                    break;
+                }
+
                 prevX = x;
                 prevY = y;
 
@@ -242,9 +268,15 @@ public class AnnotationView extends FrameLayout {
                 if (isNewDrawing && drawings.size() < 50) {
 
                     // If no drawing contains touch coordinates, make a new one
-                    makeDrawing(x, y);
+
+                    if (toolFlag == TEXT_TOOL) {
+                        makeText(x, y, event.getRawX(), event.getRawY());
+                    } else {
+                        makeDrawing(x, y);
+                    }
 
                     touchedDrawing.moveTo(x, y);
+
                 }
 
                 setAnnotating(true);
@@ -258,7 +290,7 @@ public class AnnotationView extends FrameLayout {
             case MotionEvent.ACTION_MOVE:
 
                 // Prevents multitouch movement issues
-                if (touchedDrawing == null || currentPointerId != firstPointerID) {
+                if (touchedDrawing == null || currentPointerId != firstPointerID || toolFlag == TEXT_TOOL) {
                     break;
                 }
 
@@ -306,16 +338,6 @@ public class AnnotationView extends FrameLayout {
                 if (isNewDrawing) {
 
                     action = new MakeDrawing(touchedDrawing);
-
-                    if (toolFlag == TEXT_TOOL) {
-
-                        editText.setX(x);
-                        editText.setY(y);
-                        editText.setVisibility(VISIBLE);
-                        editText.requestFocus();
-                        currentText = (TextDrawing) touchedDrawing;
-
-                    }
 
                     if (deleteFlag) {
 
@@ -373,26 +395,6 @@ public class AnnotationView extends FrameLayout {
         return true;
     }
 
-    @Override
-    public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            // Do Code here
-        } else {
-
-            test += Character.toString(event.getDisplayLabel());
-
-            TextPaint textPaint = new TextPaint(selectedPaint);
-
-            textPaint.setTextSize(80);
-
-            SpannableStringBuilder base = new SpannableStringBuilder(Character.toString(event.getDisplayLabel()));
-            dynamicLayout = new DynamicLayout(base, textPaint, base.length(),
-                    Layout.Alignment.ALIGN_NORMAL, 1.0f, 0, true);
-
-        }
-        return super.onKeyUp(keyCode, event);
-    }
-
     // Returns true if placing new drawing
     // If not, returns false and assigns touched drawing
     private boolean isNewDrawing(float x, float y) {
@@ -438,13 +440,27 @@ public class AnnotationView extends FrameLayout {
 
                 break;
 
-            case TEXT_TOOL:
-
-                touchedDrawing = new TextDrawing(x, y, selectedPaint);
+//            case TEXT_TOOL:
+//
+//                touchedDrawing = new TextDrawing(x, y, textPaint);
+//                currentText = (TextDrawing) touchedDrawing;
+//                makeText(x, y);
 
         }
 
         drawings.add(touchedDrawing);
+
+    }
+
+    public void makeText(float x, float y, float rawX, float rawY) {
+
+        touchedDrawing = new TextDrawing(rawX, rawY, textPaint);
+        currentText = (TextDrawing) touchedDrawing;
+
+        editText.setX(x);
+        editText.setY(y);
+        editText.setVisibility(VISIBLE);
+        editText.requestFocus();
 
     }
 
@@ -459,6 +475,10 @@ public class AnnotationView extends FrameLayout {
         selectedPaint.setStrokeJoin(Paint.Join.ROUND);
         selectedPaint.setStrokeCap(Paint.Cap.ROUND);
         selectedPaint.setStrokeWidth(12);
+
+        textPaint = new Paint(editText.getPaint());
+        textPaint.setColor(color);
+        editText.setTextColor(color);
 
     }
 
@@ -791,6 +811,14 @@ public class AnnotationView extends FrameLayout {
             onAnnotationListener.onAnnotation(toolFlag, annotating, isNewDrawing);
 
         }
+
+    }
+
+    public void deselectView(View v) {
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+        }
+        v.clearFocus();
 
     }
 
