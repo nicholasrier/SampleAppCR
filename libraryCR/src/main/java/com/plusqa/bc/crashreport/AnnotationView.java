@@ -48,13 +48,15 @@ public class AnnotationView extends FrameLayout {
         public void onFocusChange(View v, boolean hasFocus) {
             if (hasFocus) {
 
+                imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
+
                 editText.setText(currentText.getText());
 
                 editText.setTextColor(currentText.getPaint().getColor());
 
-                currentText.setBitmap(editText.getDrawingCache());
-
             } else {
+
+                imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
 
                 Rect newRect = new Rect();
                 editText.getDrawingRect(newRect);
@@ -65,19 +67,11 @@ public class AnnotationView extends FrameLayout {
 
                 editText.setVisibility(GONE);
 
+                currentText.setHeight(editText.getHeight());
+                currentText.setWidth(editText.getWidth());
+
                 // can't always add here
                 drawings.add(currentText);
-//                textRemoved = currentText.getText().length() <
-//                        editText.getText().toString().length();
-
-//                if (textRemoved) {
-//                    currentText.reset();
-//                    currentText.moveTo(editText.getX(), editText.getY());
-//                }
-
-//                currentText.lineTo(newRect.right, currentText.getY());
-
-
 
             }
 
@@ -163,6 +157,7 @@ public class AnnotationView extends FrameLayout {
 
         editText.setOnFocusChangeListener(onFocusChangeListenerListener);
         editText.setVisibility(GONE);
+
         addView(editText, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
 
         mScaleGestureDetector = new ScaleGestureDetector(context,
@@ -225,6 +220,8 @@ public class AnnotationView extends FrameLayout {
 
     private boolean annotating = false;
 
+    private final float textMoveThreshold = 20;
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
@@ -254,7 +251,9 @@ public class AnnotationView extends FrameLayout {
                 }
 
                 if (editText.hasFocus()) {
-                    deselectView(editText);
+
+                    editText.clearFocus();
+
                     break;
                 }
 
@@ -270,7 +269,7 @@ public class AnnotationView extends FrameLayout {
                     // If no drawing contains touch coordinates, make a new one
 
                     if (toolFlag == TEXT_TOOL) {
-                        makeText(x, y, event.getRawX(), event.getRawY());
+                        makeText(x, y);
                     } else {
                         makeDrawing(x, y);
                     }
@@ -290,7 +289,8 @@ public class AnnotationView extends FrameLayout {
             case MotionEvent.ACTION_MOVE:
 
                 // Prevents multitouch movement issues
-                if (touchedDrawing == null || currentPointerId != firstPointerID || toolFlag == TEXT_TOOL) {
+                if (touchedDrawing == null || (currentPointerId != firstPointerID)
+                        || (isNewDrawing && toolFlag == TEXT_TOOL)) {
                     break;
                 }
 
@@ -374,6 +374,7 @@ public class AnnotationView extends FrameLayout {
                 // Clear flags
                 isNewDrawing = false;
                 deleteFlag = false;
+                touchedDrawing = null;
 
                 setAnnotating(false);
 
@@ -452,15 +453,17 @@ public class AnnotationView extends FrameLayout {
 
     }
 
-    public void makeText(float x, float y, float rawX, float rawY) {
+    public void makeText(float x, float y) {
 
-        touchedDrawing = new TextDrawing(rawX, rawY, textPaint);
+        touchedDrawing = new TextDrawing(x, y, textPaint);
         currentText = (TextDrawing) touchedDrawing;
-
+        currentText.setHeight(editText.getTotalPaddingBottom());
         editText.setX(x);
-        editText.setY(y);
+        editText.setY(y - currentText.getTextHeight());
         editText.setVisibility(VISIBLE);
         editText.requestFocus();
+
+        drawings.add(currentText);
 
     }
 
@@ -811,14 +814,6 @@ public class AnnotationView extends FrameLayout {
             onAnnotationListener.onAnnotation(toolFlag, annotating, isNewDrawing);
 
         }
-
-    }
-
-    public void deselectView(View v) {
-        if (imm != null) {
-            imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-        }
-        v.clearFocus();
 
     }
 

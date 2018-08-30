@@ -16,12 +16,12 @@ public class ApplicationCR extends Application {
         super.onCreate();
 
         defaultUEH = Thread.getDefaultUncaughtExceptionHandler();
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread thread, Throwable e) {
-                handleUncaughtException(thread, e);
-            }
-        });
+//        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+//            @Override
+//            public void uncaughtException(Thread thread, Throwable e) {
+//                handleUncaughtException(thread, e);
+//            }
+//        });
     }
 
     public void handleUncaughtException (Thread thread, Throwable e)
