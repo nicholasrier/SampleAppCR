@@ -12,7 +12,7 @@ public abstract class Drawing extends Path {
 
     private Paint paint;
 
-    private boolean isDeleted;
+    private boolean deleted;
 
     private RectF rectF;
 
@@ -55,7 +55,7 @@ public abstract class Drawing extends Path {
     }
 
     public Boolean isDeleted() {
-        return isDeleted;
+        return deleted;
     }
 
     void setRectF(RectF rectF) {
@@ -157,7 +157,7 @@ public abstract class Drawing extends Path {
 
     public void delete() {
 
-        isDeleted = true;
+        deleted = true;
 
         offsetDrawing(-offsetX, -offsetY);
 
@@ -172,12 +172,12 @@ public abstract class Drawing extends Path {
     }
 
     public void redoDelete() {
-        isDeleted = true;
+        deleted = true;
     }
 
 
     public void undoDelete() {
-        isDeleted = false;
+        deleted = false;
     }
 
 }

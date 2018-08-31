@@ -8,11 +8,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.text.DynamicLayout;
-import android.text.Layout;
-import android.text.SpannableStringBuilder;
-import android.text.TextPaint;
 import android.util.AttributeSet;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -24,9 +20,9 @@ import java.util.ArrayList;
 
 public class AnnotationView extends FrameLayout {
 
-    private TextDrawing currentText;
+    private TextDrawing touchedText;
 
-    private ArrayList<TextDrawing> textList = new ArrayList<>();
+    private ArrayList<TextDrawing> texts = new ArrayList<>();
 
     private Paint selectedPaint;
 
@@ -38,45 +34,9 @@ public class AnnotationView extends FrameLayout {
 
     private Bitmap  mBitmap;
 
-    boolean textRemoved = false;
-
-    private Context context;
+    private String tempString;
 
     private EditText editText;
-    OnFocusChangeListener onFocusChangeListenerListener = new OnFocusChangeListener() {
-        @Override
-        public void onFocusChange(View v, boolean hasFocus) {
-            if (hasFocus) {
-
-                imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
-
-                editText.setText(currentText.getText());
-
-                editText.setTextColor(currentText.getPaint().getColor());
-
-            } else {
-
-                imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
-
-                Rect newRect = new Rect();
-                editText.getDrawingRect(newRect);
-
-                currentText.setRectF(new RectF(newRect));
-
-                currentText.setText(editText.getText().toString());
-
-                editText.setVisibility(GONE);
-
-                currentText.setHeight(editText.getHeight());
-                currentText.setWidth(editText.getWidth());
-
-                // can't always add here
-                drawings.add(currentText);
-
-            }
-
-        }
-    };
 
     private int firstPointerID = -1;
 
@@ -107,8 +67,6 @@ public class AnnotationView extends FrameLayout {
     // The drawing that is currently being placed / edited
     private Drawing touchedDrawing;
 
-    private TextDrawing touchedText;
-
     DynamicLayout dynamicLayout;
 
     // Previous touch coordinates
@@ -120,10 +78,79 @@ public class AnnotationView extends FrameLayout {
     // Scales drawings
     private ScaleGestureDetector mScaleGestureDetector;
 
+    OnFocusChangeListener onFocusChangeListenerListener = new OnFocusChangeListener() {
+        @Override
+        public void onFocusChange(View v, boolean hasFocus) {
+            if (hasFocus) {
+
+                imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
+
+                tempString = touchedText.getText();
+
+                editText.setText(tempString);
+
+                touchedText.setText(" ");
+
+                editText.setTextColor(touchedText.getColor());
+
+                invalidate();
+
+            } else {
+
+                imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+
+                String changedText = editText.getText().toString();
+
+                touchedText.setText(editText.getText().toString());
+
+                editText.setVisibility(GONE);
+
+                touchedText.setHeight(editText.getHeight());
+                touchedText.setWidth(editText.getWidth());
+
+                Action action = null;
+
+                if (tempString.trim().isEmpty() && !changedText.trim().isEmpty()) {
+
+                    if (changedText.trim().isEmpty()) {
+
+                        if (!texts.isEmpty()) texts.remove(touchedText);
+
+                    } else {
+
+                        action = new MakeText(touchedText);
+
+                    }
+                }
+
+                if (!changedText.trim().equals(tempString.trim()) && !tempString.trim().isEmpty()) {
+
+                    touchedText.saveChangeText();
+
+                    action = new ChangeText(touchedText);
+
+
+                }
+
+                if (action != null) {
+
+                    doneActions.add(action);
+
+                    undoneActions.clear();
+
+                }
+
+                touchedText = null;
+                invalidate();
+
+            }
+
+        }
+    };
+
+
     public AnnotationView(Context context) {
         this(context, null);
-
-        this.context = context;
 
         init(context);
 
@@ -204,6 +231,16 @@ public class AnnotationView extends FrameLayout {
             }
         }
 
+        for (TextDrawing text: texts) {
+
+            if (!text.isDeleted()) {
+
+                text.draw(canvas);
+
+            }
+
+        }
+
         canvas.save();
     }
 
@@ -268,13 +305,11 @@ public class AnnotationView extends FrameLayout {
 
                     // If no drawing contains touch coordinates, make a new one
 
-                    if (toolFlag == TEXT_TOOL) {
-                        makeText(x, y);
-                    } else {
-                        makeDrawing(x, y);
-                    }
+                    makeDrawing(x, y);
 
-                    touchedDrawing.moveTo(x, y);
+                    if (touchedDrawing != null) {
+                        touchedDrawing.moveTo(x, y);
+                    }
 
                 }
 
@@ -282,39 +317,62 @@ public class AnnotationView extends FrameLayout {
 
                 invalidate();
 
-
                 break;
 
             // Handles drawing lines and dragging objects around screen
             case MotionEvent.ACTION_MOVE:
 
-                // Prevents multitouch movement issues
-                if (touchedDrawing == null || (currentPointerId != firstPointerID)
-                        || (isNewDrawing && toolFlag == TEXT_TOOL)) {
+                // Prevents multitouch movement issues and disables movement when making text
+                if ((touchedDrawing == null && touchedText == null) ||
+                        (currentPointerId != firstPointerID) ||
+                        (editText.hasFocus())) {
                     break;
                 }
 
-                // Creating a line - can't offset until line is drawn
-                if (isNewDrawing && toolFlag == DRAW_TOOL) {
+                float offsetX = x - prevX;
+                float offsetY = y - prevY;
 
-                    touchedDrawing.quadTo(prevX, prevY, x, y);
+                if (touchedDrawing != null) {
+                    // Making a line
+                    if (isNewDrawing && toolFlag == DRAW_TOOL) {
 
-                } else {
+                        touchedDrawing.quadTo(prevX, prevY, x, y);
 
-                    // As long as we're not drawing a line - drags drawings
-                    touchedDrawing.offsetDrawing(x - prevX, y - prevY);
-
-                    float rX = event.getRawX();
-                    float rY = event.getRawY();
-
-                    // Detect if drawing is in delete area
-                    if (deleteArea.contains(rX, rY)) {
-
-                        setDeleteFlag(true);
                     } else {
 
-                        setDeleteFlag(false);
+                        // As long as we're not making a line or text - drags drawings
+                        touchedDrawing.offsetDrawing(offsetX, offsetY);
+
+                        float rX = event.getRawX();
+                        float rY = event.getRawY();
+
+                        // Detect if drawing is in delete area
+                        if (deleteArea.contains(rX, rY)) {
+
+                            setDeleteFlag(true);
+                        } else {
+
+                            setDeleteFlag(false);
+                        }
                     }
+                }
+
+                if (touchedText != null) {
+
+                    if (touchedText.offsetText(offsetX, offsetY)) {
+                        float rX = event.getRawX();
+                        float rY = event.getRawY();
+
+                        // Detect if drawing is in delete area
+                        if (deleteArea.contains(rX, rY)) {
+
+                            setDeleteFlag(true);
+                        } else {
+
+                            setDeleteFlag(false);
+                        }
+                    }
+
                 }
 
                 prevX = x;
@@ -327,55 +385,119 @@ public class AnnotationView extends FrameLayout {
             // Records what action was taken
             case MotionEvent.ACTION_UP:
 
-                if (touchedDrawing == null) {
+                if (touchedDrawing == null && touchedText == null) {
                     break;
                 }
 
                 // To be added to doneActions
                 Action action = null;
 
-                // If a new drawing was made, always save a make action
-                if (isNewDrawing) {
+                if (touchedDrawing != null) {
+                    // If a new drawing was made, always save a make action
+                    if (isNewDrawing) {
 
-                    action = new MakeDrawing(touchedDrawing);
+                        action = new MakeDrawing(touchedDrawing);
 
+                        if (deleteFlag) {
+
+                            doneActions.add(action);
+
+                        }
+
+                    }
+
+                    if (!deleteFlag && !isNewDrawing) {
+
+                        // Drawings keep track of adjustments in private list
+                        touchedDrawing.saveAdjustment();
+
+                        action = new AdjustDrawing(touchedDrawing);
+
+                    }
+
+                    // If any drawing was deleted, always save a delete action
                     if (deleteFlag) {
 
-                        doneActions.add(action);
+                        touchedDrawing.delete();
+
+                        action = new DeleteDrawing(touchedDrawing);
+
+                    }
+                }
+
+                if (touchedText != null) {
+
+                    if (!touchedText.moved) {
+                        editText.setX(touchedText.x);
+                        editText.setY(touchedText.y - touchedText.getTextHeight());
+                        editText.setVisibility(VISIBLE);
+                        editText.requestFocus();
+                        touchedText.moved = false;
+                    }
+
+                    if (isNewDrawing) {
+
+                        if (deleteFlag) {
+
+                            doneActions.add(action);
+
+                        }
+
+
+                    }
+
+                    if (!deleteFlag && !isNewDrawing) {
+
+                        if (touchedText.moved) {
+
+                            // Drawings keep track of adjustments in private list
+                            touchedText.saveAdjustment();
+
+                            action = new AdjustText(touchedText);
+
+                        } else {
+
+                            editText.setX(touchedText.x);
+                            editText.setY(touchedText.y - touchedText.getTextHeight());
+                            editText.setVisibility(VISIBLE);
+                            editText.requestFocus();
+                            touchedText.moved = false;
+
+                        }
+
+                    }
+
+                    // If any drawing was deleted, always save a delete action
+                    if (deleteFlag) {
+
+                        touchedText.delete();
+
+                        action = new DeleteText(touchedText);
 
                     }
 
                 }
 
-                if (!deleteFlag && !isNewDrawing) {
+                if (action != null) {
 
-                    // Drawings keep track of adjustments in private list
-                    touchedDrawing.saveAdjustment();
+                    // Record this completed action
+                    doneActions.add(action);
 
-                    action = new AdjustDrawing(touchedDrawing);
-
-                }
-
-                // If any drawing was deleted, always save a delete action
-                if (deleteFlag) {
-
-                    touchedDrawing.delete();
-
-                    action = new DeleteDrawing(touchedDrawing);
+                    // Clear undone actions after completing a new action
+                    undoneActions.clear();
 
                 }
 
-                // Record this completed action
-                doneActions.add(action);
-
-                // Clear undone actions after completing a new action
-                undoneActions.clear();
 
                 // Clear flags
+
+                if (!(editText.hasFocus())) {
+                    touchedText = null;
+                }
+
+                touchedDrawing = null;
                 isNewDrawing = false;
                 deleteFlag = false;
-                touchedDrawing = null;
-
                 setAnnotating(false);
 
                 invalidate();
@@ -402,16 +524,28 @@ public class AnnotationView extends FrameLayout {
 
         boolean isNew = true;
 
-        for (Drawing drawing : drawings) {
+        for (TextDrawing text : texts) {
 
-            if (!drawing.isDeleted() && drawing.contains(x, y)) {
+            if (!text.isDeleted() && text.contains(x, y)) {
 
-                touchedDrawing = drawing;
+                touchedText = text;
 
                 isNew = false;
 
-                break;
+            }
+        }
 
+        if (isNew) {
+
+            for (Drawing drawing : drawings) {
+
+                if (!drawing.isDeleted() && drawing.contains(x, y)) {
+
+                    touchedDrawing = drawing;
+
+                    isNew = false;
+
+                }
             }
         }
 
@@ -420,6 +554,9 @@ public class AnnotationView extends FrameLayout {
 
     // Creates new drawings of type specified by toolFlag
     private void makeDrawing(float x, float y) {
+
+        touchedDrawing = null;
+        touchedText = null;
 
         switch (toolFlag) {
 
@@ -441,29 +578,30 @@ public class AnnotationView extends FrameLayout {
 
                 break;
 
-//            case TEXT_TOOL:
-//
-//                touchedDrawing = new TextDrawing(x, y, textPaint);
-//                currentText = (TextDrawing) touchedDrawing;
-//                makeText(x, y);
+            case TEXT_TOOL:
+
+                touchedText = new TextDrawing(x, y, textPaint);
+                makeText(x, y);
 
         }
 
-        drawings.add(touchedDrawing);
+        if (touchedText != null) {
+            texts.add(touchedText);
+        }
+
+        if (touchedDrawing != null) {
+            drawings.add(touchedDrawing);
+        }
 
     }
 
     public void makeText(float x, float y) {
 
-        touchedDrawing = new TextDrawing(x, y, textPaint);
-        currentText = (TextDrawing) touchedDrawing;
-        currentText.setHeight(editText.getTotalPaddingBottom());
+        touchedText.setHeight(editText.getTotalPaddingBottom());
         editText.setX(x);
-        editText.setY(y - currentText.getTextHeight());
+        editText.setY(y - touchedText.getTextHeight());
         editText.setVisibility(VISIBLE);
         editText.requestFocus();
-
-        drawings.add(currentText);
 
     }
 
@@ -503,7 +641,7 @@ public class AnnotationView extends FrameLayout {
     // Undoes any drawing actions taken by user
     public void undo() {
 
-        if (doneActions.size() > 0) {
+        if (doneActions.size() > 0 && !editText.hasFocus()) {
 
             // Get the latest done action
             Action latestAction = doneActions.get(doneActions.size() - 1);
@@ -525,7 +663,7 @@ public class AnnotationView extends FrameLayout {
     // Redoes any drawing actions taken by user
     public void redo() {
 
-        if (undoneActions.size() > 0) {
+        if (undoneActions.size() > 0 && !editText.hasFocus()) {
 
             // Get the latest undone action
             Action latestUndoneAction = undoneActions.get(undoneActions.size() - 1);
@@ -616,6 +754,89 @@ public class AnnotationView extends FrameLayout {
         }
     }
 
+    private class MakeText implements Action {
+
+        TextDrawing text;
+        int index;
+
+
+        MakeText(TextDrawing text) {
+            this.text = text;
+        }
+
+        @Override
+        public void undoAction() {
+            index = texts.indexOf(text);
+            texts.remove(text);
+        }
+
+
+        @Override
+        public void doAction() {
+            texts.add(index, text);
+        }
+
+    }
+
+    private class AdjustText implements Action {
+
+        TextDrawing text;
+
+        AdjustText(TextDrawing text) {
+            this.text = text;
+        }
+
+        @Override
+        public void undoAction() {
+            text.undoAdjust();
+        }
+
+        @Override
+        public void doAction() {
+            text.redoAdjust();
+        }
+
+    }
+
+    private class DeleteText implements Action {
+
+        TextDrawing text;
+
+        DeleteText(TextDrawing text) {
+            this.text = text;
+        }
+
+        @Override
+        public void undoAction() {
+            text.undoDelete();
+        }
+
+        @Override
+        public void doAction() {
+            text.redoDelete();
+        }
+    }
+
+    private class ChangeText implements Action {
+
+        TextDrawing text;
+
+        ChangeText(TextDrawing text) {
+            this.text = text;
+        }
+
+        @Override
+        public void undoAction() {
+            text.undoChangeText();
+            invalidate();
+        }
+
+        @Override
+        public void doAction() {
+            text.redoChangeText();
+            invalidate();
+        }
+    }
 
     // Allows for scaling of any drawing
     private class DrawingScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {

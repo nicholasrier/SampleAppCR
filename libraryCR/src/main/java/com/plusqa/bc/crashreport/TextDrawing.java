@@ -1,34 +1,57 @@
 package com.plusqa.bc.crashreport;
 
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.text.DynamicLayout;
 import android.text.Layout;
-import android.text.StaticLayout;
 import android.text.TextPaint;
 
-public class TextDrawing extends Drawing {
+import java.util.ArrayList;
+
+public class TextDrawing {
 
     private String text;
-    private float x, y;
+    public float x, y;
     private TextPaint textPaint;
     private float height;
     private float width;
+    private float offsetX, offsetY;
+    private final int moveThreshold = 20;
+    public boolean moved = false;
+    private boolean deleted = false;
+
+    private ArrayList<Adjustment> doneAdjustments = new ArrayList<>();
+
+    private ArrayList<Adjustment> undoneAdjustments = new ArrayList<>();
+
+    private ArrayList<String> doneStrings = new ArrayList<>();
+
+    private ArrayList<String> undoneStrings = new ArrayList<>();
+
+    private class Adjustment {
+
+        float offsetX, offsetY;
+
+        Adjustment(float offsetX, float offsetY) {
+
+            this.offsetX = offsetX;
+            this.offsetY = offsetY;
+        }
+    }
+
 
     TextDrawing(float x, float y, Paint paint) {
 
-        super(x, y, paint);
+
         this.x = x;
         this.y = y;
         text = " ";
 
-        textPaint = new TextPaint(getPaint());
+        textPaint = new TextPaint(paint);
     }
 
-    @Override
     public boolean contains(float x, float y) {
 
         RectF bounds = new RectF(x - width/2,
@@ -38,13 +61,12 @@ public class TextDrawing extends Drawing {
 
         bounds.offsetTo(this.x, this.y);
 
-        setRectF(bounds);
 
-        return getRectF().contains(x, y);
+        return bounds.contains(x, y);
 
     }
 
-    @Override
+
     public void draw(Canvas canvas) {
 
         DynamicLayout layout = new DynamicLayout(text, textPaint, canvas.getWidth(),
@@ -61,18 +83,27 @@ public class TextDrawing extends Drawing {
             layout.draw(canvas);
             canvas.restore();
 
-            canvas.drawPath(this, getPaint());
         }
 
     }
 
-    @Override
-    public void offsetDrawing(float offsetX, float offsetY) {
+    public boolean offsetText(float offsetX, float offsetY) {
 
-        super.offsetDrawing(offsetX, offsetY);
+        this.offsetX += offsetX;
+        this.offsetY += offsetY;
 
-        x += offsetX;
-        y += offsetY;
+        if (Math.abs(this.offsetX) > moveThreshold || Math.abs(this.offsetY) > moveThreshold) {
+            x += offsetX;
+            y += offsetY;
+
+            moved = true;
+
+            return true;
+        }
+
+        moved = false;
+
+        return false;
 
     }
 
@@ -84,6 +115,108 @@ public class TextDrawing extends Drawing {
 
         return text;
     }
+
+    public void saveAdjustment() {
+
+        if (offsetX >= 0) {
+            offsetX -= moveThreshold;
+        } else {
+            offsetX += moveThreshold;
+        }
+
+        if (offsetY >= 0) {
+            offsetY -= moveThreshold;
+        } else {
+            offsetY += moveThreshold;
+        }
+
+        doneAdjustments.add(new Adjustment(offsetX, offsetY));
+
+        undoneAdjustments.clear();
+
+        offsetX = 0;
+        offsetY = 0;
+
+    }
+
+    public void redoAdjust() {
+
+        if (!undoneAdjustments.isEmpty()) {
+
+            Adjustment ta = undoneAdjustments.get(undoneAdjustments.size() - 1);
+
+            doneAdjustments.add(ta);
+
+            undoneAdjustments.remove(ta);
+
+            x += ta.offsetX;
+            y += ta.offsetY;
+
+            offsetX = 0;
+            offsetY = 0;
+
+        }
+    }
+
+    public void undoAdjust() {
+
+        if (!doneAdjustments.isEmpty()) {
+
+            Adjustment ta = doneAdjustments.get(doneAdjustments.size() - 1);
+
+            undoneAdjustments.add(ta);
+
+            doneAdjustments.remove(ta);
+
+            x -= ta.offsetX;
+            y -= ta.offsetY;
+
+            offsetX = 0;
+            offsetY = 0;
+
+        }
+    }
+
+    public void saveChangeText() {
+
+        doneStrings.add(text);
+
+        undoneStrings.clear();
+
+    }
+
+    public void redoChangeText() {
+
+        if (!undoneStrings.isEmpty()) {
+
+            String s = undoneStrings.get(undoneStrings.size() - 1);
+
+            doneStrings.add(s);
+
+            undoneStrings.remove(s);
+
+            text = s;
+
+        }
+
+    }
+
+    public void undoChangeText() {
+
+        if (!doneStrings.isEmpty()) {
+
+            String s = doneStrings.get(doneStrings.size() - 1);
+
+            undoneStrings.add(s);
+
+            doneStrings.remove(s);
+
+            text = s;
+
+        }
+
+    }
+
 
     public void setText(String text) {
         this.text = text;
@@ -100,4 +233,42 @@ public class TextDrawing extends Drawing {
     public void setWidth(float width) {
         this.width = width;
     }
+
+    public int getColor() {
+        return textPaint.getColor();
+    }
+
+    public void delete() {
+
+        if (offsetX >= 0) {
+            offsetX -= moveThreshold;
+        } else {
+            offsetX += moveThreshold;
+        }
+
+        if (offsetY >= 0) {
+            offsetY -= moveThreshold;
+        } else {
+            offsetY += moveThreshold;
+        }
+
+        x -= offsetX;
+        y -= offsetY;
+
+        deleted = true;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void redoDelete() {
+        deleted = true;
+    }
+
+
+    public void undoDelete() {
+        deleted = false;
+    }
+
 }
