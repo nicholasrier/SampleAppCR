@@ -97,7 +97,7 @@ public class ScreenShotMarkUp extends AppCompatActivity {
         screenshotLayout.addView(screenshotView);
 
 
-        Bitmap screenShotBM = Utils.getBitMap(getApplicationContext(), CrashReport.image_name);
+        Bitmap screenShotBM = Utils.getBitMap(getApplicationContext(), "screenshot.jpg");
         BitmapDrawable bitmapDrawable = new BitmapDrawable(getResources(), screenShotBM);
 
         screenshotView.setBackground(bitmapDrawable);

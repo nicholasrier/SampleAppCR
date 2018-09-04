@@ -67,7 +67,7 @@ public class Utils {
         FileInputStream fis = null;
 
         try {
-            fis = new FileInputStream(log_directory.toString() + "/" + CrashReport.log_name);
+            fis = new FileInputStream(log_directory.toString() + "/" + "logcat.txt");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
