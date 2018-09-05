@@ -19,7 +19,6 @@ public class TextDrawing {
     private float width;
     private float offsetX, offsetY;
     private final int moveThreshold = 20;
-    public boolean moved = false;
     private boolean deleted = false;
 
     private ArrayList<Adjustment> doneAdjustments = new ArrayList<>();
@@ -29,6 +28,10 @@ public class TextDrawing {
     private ArrayList<String> doneStrings = new ArrayList<>();
 
     private ArrayList<String> undoneStrings = new ArrayList<>();
+
+    public boolean isMoved() {
+        return Math.abs(this.offsetX) > moveThreshold || Math.abs(this.offsetY) > moveThreshold;
+    }
 
     private class Adjustment {
 
@@ -43,7 +46,6 @@ public class TextDrawing {
 
 
     TextDrawing(float x, float y, Paint paint) {
-
 
         this.x = x;
         this.y = y;
@@ -92,16 +94,13 @@ public class TextDrawing {
         this.offsetX += offsetX;
         this.offsetY += offsetY;
 
-        if (Math.abs(this.offsetX) > moveThreshold || Math.abs(this.offsetY) > moveThreshold) {
+        if (isMoved()) {
+
             x += offsetX;
             y += offsetY;
 
-            moved = true;
-
             return true;
         }
-
-        moved = false;
 
         return false;
 
@@ -195,7 +194,9 @@ public class TextDrawing {
 
             undoneStrings.remove(s);
 
-            text = s;
+            if (!doneStrings.isEmpty()) {
+                text = doneStrings.get(doneStrings.size() - 1);
+            }
 
         }
 
@@ -211,7 +212,9 @@ public class TextDrawing {
 
             doneStrings.remove(s);
 
-            text = s;
+            if (!doneStrings.isEmpty()) {
+                text = doneStrings.get(doneStrings.size() - 1);
+            }
 
         }
 

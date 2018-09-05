@@ -44,7 +44,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:backgroundTint="@android:color/darker_gray"
-            android:inputType="text" />
+            android:inputType="text|textCapSentences" />
 
     </android.support.design.widget.TextInputLayout>
 
@@ -69,13 +69,14 @@
             android:backgroundTint="@android:color/darker_gray"
             android:focusable="true"
             android:gravity="start"
-            android:inputType="textMultiLine"
+            android:inputType="textMultiLine|textCapSentences"
             android:isScrollContainer="true"
             android:maxLines="9"
             android:minLines="9"
             android:singleLine="false"
             android:textAlignment="textStart"
-            android:textColorHint="@color/colorPrimaryCR" />
+            android:textColorHint="@color/colorPrimaryCR"
+            />
 
     </android.support.design.widget.TextInputLayout>
 

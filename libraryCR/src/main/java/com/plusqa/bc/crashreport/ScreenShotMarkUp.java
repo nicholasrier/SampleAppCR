@@ -25,6 +25,7 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.animation.DecelerateInterpolator;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 
 
@@ -156,7 +157,6 @@ public class ScreenShotMarkUp extends AppCompatActivity {
         fab3Color = black;
 
         imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-
 
         fabBGLayout = findViewById(R.id.fabBGLayout);
 

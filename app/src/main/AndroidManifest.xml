@@ -3,7 +3,7 @@
     package="com.plusqa.bc.sampleappcr">
 
     <application
-        android:name="com.plusqa.bc.crashreport.ApplicationCR"
+        android:name="com.plusqa.bc.sampleappcr.MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"

@@ -5,9 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.RectF;
-import android.text.DynamicLayout;
+import android.text.InputType;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -40,8 +39,6 @@ public class AnnotationView extends FrameLayout {
 
     private int firstPointerID = -1;
 
-    ArrayList<TextDrawing> textDrawings =  new ArrayList<>();
-
     InputMethodManager imm;
 
     // Designates the tool that is selected
@@ -62,18 +59,13 @@ public class AnnotationView extends FrameLayout {
     // List of actions that have been reversed by undo()
     private ArrayList<Action> undoneActions = new ArrayList<>();
 
-    private ArrayList<DynamicLayout> textLayouts = new ArrayList<>();
-
     // The drawing that is currently being placed / edited
     private Drawing touchedDrawing;
-
-    DynamicLayout dynamicLayout;
 
     // Previous touch coordinates
     private float prevX, prevY;
 
     private boolean deleteFlag = false;
-    private boolean wasDrawingInTrash = false;
 
     // Scales drawings
     private ScaleGestureDetector mScaleGestureDetector;
@@ -81,11 +73,11 @@ public class AnnotationView extends FrameLayout {
     OnFocusChangeListener onFocusChangeListenerListener = new OnFocusChangeListener() {
         @Override
         public void onFocusChange(View v, boolean hasFocus) {
+
             if (hasFocus) {
 
-                imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
-
-                tempString = touchedText.getText();
+                imm.showSoftInput(v, InputMethodManager.SHOW_FORCED);
+                tempString = touchedText.getText().trim();
 
                 editText.setText(tempString);
 
@@ -97,11 +89,11 @@ public class AnnotationView extends FrameLayout {
 
             } else {
 
-                imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+                imm.hideSoftInputFromWindow(getWindowToken(), 0);
 
-                String changedText = editText.getText().toString();
+                String changedText = editText.getText().toString().trim();
 
-                touchedText.setText(editText.getText().toString());
+                touchedText.setText(editText.getText().toString().trim());
 
                 editText.setVisibility(GONE);
 
@@ -110,25 +102,16 @@ public class AnnotationView extends FrameLayout {
 
                 Action action = null;
 
-                if (tempString.trim().isEmpty() && !changedText.trim().isEmpty()) {
-
-                    if (changedText.trim().isEmpty()) {
-
-                        if (!texts.isEmpty()) texts.remove(touchedText);
-
-                    } else {
+                if (tempString.trim().isEmpty() && !changedText.isEmpty()) {
 
                         action = new MakeText(touchedText);
 
-                    }
-                }
-
-                if (!changedText.trim().equals(tempString.trim()) && !tempString.trim().isEmpty()) {
+                        touchedText.saveChangeText();
+                } else if (!changedText.trim().equals(tempString) && !tempString.isEmpty()) {
 
                     touchedText.saveChangeText();
 
                     action = new ChangeText(touchedText);
-
 
                 }
 
@@ -181,6 +164,8 @@ public class AnnotationView extends FrameLayout {
         toolFlag = DRAW_TOOL;
 
         editText = new EditText(context);
+
+        editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
 
         editText.setOnFocusChangeListener(onFocusChangeListenerListener);
         editText.setVisibility(GONE);
@@ -256,8 +241,6 @@ public class AnnotationView extends FrameLayout {
     private int currentPointerId = -1;
 
     private boolean annotating = false;
-
-    private final float textMoveThreshold = 20;
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -427,12 +410,18 @@ public class AnnotationView extends FrameLayout {
 
                 if (touchedText != null) {
 
-                    if (!touchedText.moved) {
+                    if (!touchedText.isMoved()) {
                         editText.setX(touchedText.x);
                         editText.setY(touchedText.y - touchedText.getTextHeight());
                         editText.setVisibility(VISIBLE);
                         editText.requestFocus();
-                        touchedText.moved = false;
+
+                        if (editText.getText().toString().trim().isEmpty()) {
+                            editText.setSelection(0);
+                        } else {
+                            editText.setSelection(editText.getText().length());
+                        }
+
                     }
 
                     if (isNewDrawing) {
@@ -448,7 +437,7 @@ public class AnnotationView extends FrameLayout {
 
                     if (!deleteFlag && !isNewDrawing) {
 
-                        if (touchedText.moved) {
+                        if (touchedText.isMoved()) {
 
                             // Drawings keep track of adjustments in private list
                             touchedText.saveAdjustment();
@@ -461,7 +450,6 @@ public class AnnotationView extends FrameLayout {
                             editText.setY(touchedText.y - touchedText.getTextHeight());
                             editText.setVisibility(VISIBLE);
                             editText.requestFocus();
-                            touchedText.moved = false;
 
                         }
 
