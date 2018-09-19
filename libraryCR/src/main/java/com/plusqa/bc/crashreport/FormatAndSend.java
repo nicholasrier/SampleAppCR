@@ -35,6 +35,7 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -55,6 +56,7 @@ public class FormatAndSend extends AppCompatActivity
 
         Toolbar mTopToolbar = findViewById(R.id.format_and_send_toolbar);
         setSupportActionBar(mTopToolbar);
+
 
         imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 

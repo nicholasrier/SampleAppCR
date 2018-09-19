@@ -55,7 +55,7 @@ public class Utils {
         File logDirectory = context.getDir("logDir", Context.MODE_PRIVATE);
 
         try {
-            Runtime.getRuntime().exec(new String[]{"logcat", "-df", logDirectory.toString() + "/" + logName});
+            Runtime.getRuntime().exec(new String[]{"logcat", "-d", "-f", logDirectory.toString() + "/" + logName});
         } catch (IOException e) {
             e.printStackTrace();
         }

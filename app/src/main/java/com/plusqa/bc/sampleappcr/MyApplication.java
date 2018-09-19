@@ -1,8 +1,8 @@
 package com.plusqa.bc.sampleappcr;
 
-        import android.app.Application;
+import android.app.Application;
 
-        import com.plusqa.bc.crashreport.Reporter;
+import com.plusqa.bc.crashreport.Reporter;
 
 public class MyApplication extends Application {
     @Override
@@ -10,9 +10,7 @@ public class MyApplication extends Application {
 
         super.onCreate();
 
-        Reporter reporter = new Reporter(this);
-
-
+        Reporter.makeReporter(this);
 
     }
 }

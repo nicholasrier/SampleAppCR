@@ -46,7 +46,7 @@ public abstract class Drawing extends Path {
 
 //  -------- Gets and sets --------
 
-    public Paint getPaint() {
+    private Paint getPaint() {
         return paint;
     }
 

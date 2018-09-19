@@ -75,7 +75,11 @@ public class Reporter {
     }
 
 
-    public Reporter(@NonNull final Application application) {
+    public static Reporter makeReporter(Application application) {
+        return new Reporter(application);
+    }
+
+    private Reporter(@NonNull final Application application) {
 
         this.application = application;
 
@@ -130,7 +134,7 @@ public class Reporter {
 
     }
 
-    public void handleUncaughtException (Thread thread, Throwable e)
+    private void handleUncaughtException (Thread thread, Throwable e)
     {
         e.printStackTrace();
 
@@ -181,6 +185,17 @@ public class Reporter {
         view.destroyDrawingCache();
 
         return b;
+    }
+
+
+    public void setDeliveryMethodToEmail(String defaultEmail) {
+
+
+
+    }
+
+    public void setDeliveryMethodToEndpoint(String endpoint) {
+
     }
 
 }

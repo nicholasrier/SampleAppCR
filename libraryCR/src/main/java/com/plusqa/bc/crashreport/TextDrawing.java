@@ -44,7 +44,6 @@ public class TextDrawing {
         }
     }
 
-
     TextDrawing(float x, float y, Paint paint) {
 
         this.x = x;
@@ -56,7 +55,8 @@ public class TextDrawing {
 
     public boolean contains(float x, float y) {
 
-        RectF bounds = new RectF(x - width/2,
+        RectF bounds = new RectF(
+                x - width/2,
                 y - height/2,
                 x + width/2,
                 y + height/2);

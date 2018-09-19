@@ -25,7 +25,6 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.animation.DecelerateInterpolator;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 
 
@@ -137,6 +136,7 @@ public class ScreenShotMarkUp extends AppCompatActivity {
         fabLayoutRed = findViewById(R.id.fabColorLayout_red);
         fabLayoutGreen = findViewById(R.id.fabColorLayout_green);
         fabLayoutBlack = findViewById(R.id.fabColorLayout_black);
+
         //tool FABs
         fabCurrentTool = findViewById(R.id.fab);
         fabTool1 = findViewById(R.id.fab1);
@@ -144,6 +144,7 @@ public class ScreenShotMarkUp extends AppCompatActivity {
         fabShapeOption = findViewById(R.id.fab_shapeOption);
         fabTool3 = findViewById(R.id.fab3);
         fabDelete = findViewById(R.id.fabDelete);
+
         //color FABs
         colorFAB1 = findViewById(R.id.fab_red);
         colorFAB2 = findViewById(R.id.fab_green);
