@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -13,21 +15,31 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true" >
 
-            <activity
-                android:name=".ScreenShotMarkUp"
-                android:theme="@style/AppThemeCR"
-                android:windowSoftInputMode="adjustResize"
-                android:taskAffinity=".library">
+        <activity
+            android:name=".ScreenShotMarkUp"
+            android:theme="@style/AppThemeCR"
+            android:windowSoftInputMode="adjustResize"
+            android:taskAffinity=".library">
 
-            </activity>
+        </activity>
 
-            <activity
-                android:name=".FormatAndSend"
-                android:theme="@style/AppThemeCR"
-                android:screenOrientation="portrait"
-                android:windowSoftInputMode="adjustPan"
-                android:taskAffinity=".library">
-            </activity>
+        <activity
+            android:name=".FormatAndSend"
+            android:theme="@style/AppThemeCR"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustPan"
+            android:taskAffinity=".library">
+        </activity>
 
-        </application>
+        <provider
+            android:name=".GenericFileProvider"
+            android:authorities="com.plusqa.bc.crashreport.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
+        </provider>
+
+    </application>
 </manifest>
